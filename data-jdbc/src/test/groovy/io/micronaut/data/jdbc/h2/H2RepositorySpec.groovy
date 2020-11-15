@@ -16,6 +16,8 @@
 package io.micronaut.data.jdbc.h2
 
 import io.micronaut.data.tck.entities.Car
+import io.micronaut.data.tck.entities.Face
+import io.micronaut.data.tck.entities.Nose
 import io.micronaut.data.tck.repositories.AuthorRepository
 import io.micronaut.data.tck.repositories.BookDtoRepository
 import io.micronaut.data.tck.repositories.BookRepository
@@ -319,5 +321,53 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
 
         cleanup:
         cleanupData()
+    }
+
+    void "test cascading insert from parent"() {
+        given:
+        Face face = new Face("Bob")
+        face.setNose(new Nose())
+        long faceId = faceRepository.save(face).id
+
+        when:
+        def retrievedFace = faceRepository.findById(faceId)
+
+        then:
+        retrievedFace.isPresent() == true
+        retrievedFace.get().nose != null
+
+        when:
+        def retrievedNose = noseRepository.findById(retrievedFace.nose.id)
+
+        then:
+        retrievedNose.isPresent() == true
+        retrievedNose.get().face != null
+
+        retrievedFace.get().nose.id != retrievedNose.get().id
+        retrievedFace.get().id != retrievedNose.get().face.id
+    }
+
+    void "test cascading insert from child"() {
+        given:
+        Face face = new Face("Bob")
+        Nose nose = new Nose(face: face)
+        long noseId = noseRepository.save(nose).id
+
+        when:
+        def retrievedNose = noseRepository.findById(noseId)
+
+        then:
+        retrievedNose.isPresent() == true
+        retrievedNose.get().face != null
+
+        when:
+        def retrievedFace = faceRepository.findById(retrievedNose.face.id)
+
+        then:
+        retrievedFace.isPresent() == true
+        retrievedFace.get().nose != null
+
+        retrievedFace.get().nose.id != retrievedNose.get().id
+        retrievedFace.get().id != retrievedNose.get().face.id
     }
 }

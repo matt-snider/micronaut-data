@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Creator;
 import io.micronaut.data.annotation.DateCreated;
 import io.micronaut.data.annotation.DateUpdated;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
@@ -55,7 +56,7 @@ public class Face {
         this.name = name;
     }
 
-    @OneToOne(mappedBy = "face")
+    @OneToOne(mappedBy = "face", cascade = CascadeType.PERSIST)
     private Nose nose;
 
     public Long getId() {
